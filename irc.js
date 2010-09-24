@@ -27,6 +27,7 @@ var server=irc.server=function(params){
 	this.encoding='utf8';
 	this.channels={};
 	this.plugins={};
+	this.nick=params.nick;
 	self=this;
 	//Register The Plugins
 	this.registerPlugins();
@@ -62,6 +63,7 @@ server.prototype.connect=function(params)
 server.prototype.onConnect=function(params)
 {
 	this.send('NICK', params.nick);
+	this.nick=params.nick;
 	if(params.pass)
 		this.send('PASS',params.pass)
   	this.send('USER', params.user, '0', '*', ':'+params.real);
@@ -338,6 +340,10 @@ server.prototype.nick=function(nick)
 {
 	
 }
+server.prototype.say=function(channel,message)
+{
+	this.send("PRIVMSG "+channel+" :"+message);
+}
 server.prototype.output=function(obj)
 {
 	var time=new Date();
@@ -348,6 +354,19 @@ server.prototype.output=function(obj)
 	obj.seconds=time.getSeconds();
 	this.emit(obj.type,JSON.stringify(obj));
 	this.emit('DEBUG',JSON.stringify(obj));
+	//Send to plugins
+	this.messagePlugins(obj);
+}
+server.prototype.messagePlugins=function(obj)
+{
+	_.each(this.plugins,function(plugin){
+		try{
+			plugin.onMessage(obj);
+		}catch(e)
+		{
+			//console.log(e)
+		}
+	});
 }
 server.prototype.emitInfo=function(info)
 {
