@@ -6,6 +6,8 @@ var plugin=parser.plugin=function(name,folder)
 	this.parent={};
 	this.routes={};
 	this.prefix="!";
+	this.name=name;
+	this.folder=folder;
 }
 plugin.prototype.onMessage=function(obj)
 {
