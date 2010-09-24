@@ -3,6 +3,7 @@ var net=require('net');
 var crypto = require('crypto');
 require('underscore');
 var dns = require('dns');
+var fs=require('fs');
 var irc = exports;
 function bind(fn, scope) {
   var bindArgs = Array.prototype.slice.call(arguments);
@@ -25,7 +26,10 @@ var server=irc.server=function(params){
 	this.ping=params.ping || false;
 	this.encoding='utf8';
 	this.channels={};
+	this.plugins={};
 	self=this;
+	//Register The Plugins
+	this.registerPlugins();
 }
 sys.inherits(server, process.EventEmitter);
 server.prototype.connect=function(params)
@@ -417,6 +421,27 @@ server.prototype.getUserChannels=function(name)
 
 	});
 	return channels;
+}
+server.prototype.registerPlugins=function()
+{
+	console.log("Registering Plugins...");
+	var files=fs.readdirSync("plugins/core");
+	try{
+		//require('./plugins/core/db.js')
+	}catch(e)
+	{
+		sys.puts(e)
+	}
+	_.each(files,function(file){
+		try{
+			//console.log('./plugins/core/'+file.substr(0,file.length-3))
+			var tmp=require('./plugins/core/'+file.substr(0,file.length-3));
+			new tmp.plugin(self.options);
+		}catch(e)
+		{
+			sys.puts(e);
+		}
+	})
 }
 server.prototype.send = function(arg1) {
   if (this.connection.readyState !== 'open') {
