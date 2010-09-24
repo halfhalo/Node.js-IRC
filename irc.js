@@ -425,21 +425,47 @@ server.prototype.getUserChannels=function(name)
 server.prototype.registerPlugins=function()
 {
 	console.log("Registering Plugins...");
-	var files=fs.readdirSync("plugins/core");
+	var folders=fs.readdirSync("plugins");
 	try{
-		//require('./plugins/core/db.js')
+		_.each(folders,function(folder){
+			var tmpstat=fs.statSync('plugins/'+folder);
+			if(tmpstat.isDirectory())
+			{
+				var files=fs.readdirSync("plugins/"+folder);
+				_.each(files,function(file){
+					try{
+						var filetmpst=fs.statSync("plugins/"+folder+"/"+file);
+						if(filetmpst.isFile())
+						{
+							var tmp=require("./plugins/"+folder+"/"+file.substr(0,file.length-3));
+							if(self.plugins[file.substr(0,file.length-3)])
+							{
+								console.log("WARNING: Plugin already exists! "+file.substr(0,file.length-3))
+							}
+							else
+							{
+								self.plugins[file.substr(0,file.length-3)]=new tmp.plugin(file.substr(0,file.length-3),folder);
+								console.log("Plugin Registered: "+file.substr(0,file.length-3)+" ("+folder+")");
+							}
+						}
+					}catch(e)
+					{
+						console.log(e)
+					}
+				});
+			}
+		});
 	}catch(e)
 	{
-		sys.puts(e)
+		console.log(e)
 	}
-	_.each(files,function(file){
+	//Activate all the plugins
+	_.each(self.plugins,function(plugin,name){
 		try{
-			//console.log('./plugins/core/'+file.substr(0,file.length-3))
-			var tmp=require('./plugins/core/'+file.substr(0,file.length-3));
-			new tmp.plugin(self.options);
+			self.plugins[name].registerPlugins(self.plugins,self);
 		}catch(e)
 		{
-			sys.puts(e);
+			
 		}
 	})
 }

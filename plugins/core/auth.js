@@ -1,8 +1,13 @@
 var auth=exports;
-var plugin=auth.plugin=function(options)
+var plugin=auth.plugin=function(name,folder)
 {
-	//var db=options.db || [];
-	console.log('Auth Plugin Registered')
+	this.plugins={};
+	this.parent={};
+}
+plugin.prototype.registerPlugins=function(plugins,parent)
+{
+	this.plugins=plugins || {};
+	this.parent=parent || {};
 }
 plugin.prototype.authUser=function(user,channel,action)
 {
