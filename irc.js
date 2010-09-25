@@ -330,7 +330,7 @@ server.prototype.enterChannel=function(channel)
 }
 server.prototype.leaveChannel=function(channel)
 {
-	
+	this.send("PART "+channel)
 }
 server.prototype.quit=function(reason)
 {

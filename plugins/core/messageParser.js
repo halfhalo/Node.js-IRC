@@ -36,12 +36,28 @@ plugin.prototype.addRoute=function(plugin,parser,callback,prefix)
 	{
 		this.routes[plugin]=[];
 	}
-	var obj={};
-	obj.parser=this.toRegex(parser);
-	obj.keys=this.getKeys(parser);
-	obj.callback=callback;
-	obj.prefix=prefix || true;
-	this.routes[plugin].push(obj);
+	if(typeof parser =="string")
+	{
+		var obj={};
+		obj.parser=this.toRegex(parser);
+		obj.keys=this.getKeys(parser);
+		obj.callback=callback;
+		obj.prefix=prefix || true;
+		this.routes[plugin].push(obj);	
+	}
+	if(typeof parser=="object")
+	{
+		var self=this;
+		_.each(parser,function(p){
+			var obj={};
+			obj.parser=self.toRegex(p);
+			obj.keys=self.getKeys(p);
+			obj.callback=callback;
+			obj.prefix=prefix || true;
+			self.routes[plugin].push(obj);	
+		});
+	}
+
 	return true;
 }
 plugin.prototype.checkRoute=function(route,message,obj)
@@ -110,19 +126,31 @@ plugin.prototype.message=function(plugin,message,obj)
 }
 plugin.prototype.getKeys=function(message)
 {
-	var keys=[];
-	message=message.replace(/:(\w+)/g,function(key){
-			keys.push(key.substr(1,key.length));
-			return "(\\w+)";
-	});
-	return keys;
+	try{
+		var keys=[];
+		message=message.replace(/:(\w+)/g,function(key){
+				keys.push(key.substr(1,key.length));
+				return "(\\w+)";
+		});
+		return keys;
+	}catch(e)
+	{
+		console.log(e)
+	}
+
 }
 plugin.prototype.toRegex=function(message)
 {
-	message=message.replace(/\./g, "\\.")
-		.replace(/:(\w+)/g,function(_,key){
-			return "(\\w+)";
-	});
-	var reg=new RegExp("^"+message+"$")
-	return reg;
+	try{
+		message=message.replace(/\./g, "\\.")
+			.replace(/:(\w+)/g,function(_,key){
+				return "(\\w+)";
+		});
+		var reg=new RegExp("^"+message+"$")
+		return reg;
+	}catch(e)
+	{
+		console.log(e)
+	}
+
 }

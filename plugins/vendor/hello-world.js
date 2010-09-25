@@ -11,9 +11,13 @@ plugin.prototype.registerPlugins=function(plugins,parent)
 	this.plugins=plugins || {};
 	this.parent=parent || {};
 	var self=this;
-	this.plugins['messageParser'].addRoute(this.name,"hello",function(result,obj)
+	this.plugins['messageParser'].addRoute(this.name,["hello","hello!"],function(result,obj)
 	{
-		self.parent.say(obj.channel,"Hello!");
+		self.parent.say(obj.channel,"Hello "+obj.name+"!");
+	});
+	this.plugins['messageParser'].addRoute(this.name,"hello :name",function(result,obj)
+	{
+		self.parent.say(obj.channel,"Hello "+result.name+"!");
 	});
 }
 plugin.prototype.onMessage=function(obj)
