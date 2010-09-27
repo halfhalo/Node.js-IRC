@@ -5,7 +5,7 @@ var plugin=core.plugin=function(name,folder)
 {
 	this.plugins={};
 	this.parent={};
-	this.routes={};
+	this.routes=[];
 	this.prefix="!";
 	this.name=name;
 	this.folder=folder;
@@ -15,23 +15,34 @@ plugin.prototype.onMessage=function(obj)
 	var self=this;
 	_.each(self.routes,function(route){
 
-		if(self.checkRoute(obj.message,route))
+		if(self.checkRoute(obj,route))
 		{
-			self.routeMessage(route,obj);
+			self.plugins['auth'].allowed(obj.name,obj.channel,obj.mode || " ",route.level,function(s){
+				if(s)
+					self.routeMessage(route,obj);
+			})
+
+			
 		}
 	});
 }
 plugin.prototype.prefixExists=function(message)
 {
-	if(message[0]==this.prefix[0])
+	try{
+		if(message[0]==this.prefix[0])
+		{
+			return message.substr(1,message.length);
+		}
+		if(message.substr(0,this.parent.nick.length)==this.parent.nick)
+		{
+			return message.substr(this.parent.nick.length+2,message.length)
+		}
+		return false;
+	}catch(e)
 	{
-		return message.substr(1,message.length);
+		
 	}
-	if(message.substr(0,this.parent.nick.length)==this.parent.nick)
-	{
-		return message.substr(this.parent.nick.length+2,message.length)
-	}
-	return false;
+
 }
 plugin.prototype.registerPlugins=function(plugins,parent)
 {
@@ -49,7 +60,7 @@ plugin.prototype.getKeys=function(message)
 		return keys || [];
 	}catch(e)
 	{
-		sys.puts(e)
+		//sys.puts(e)
 	}
 }
 plugin.prototype.routeMessage=function(route,obj)
@@ -57,9 +68,13 @@ plugin.prototype.routeMessage=function(route,obj)
 	var counter=1;
 	var keys={};
 	var self=this;
+
 	try{
 		if(self.prefixExists(obj.message))
+		{
 			obj.message=self.prefixExists(obj.message);
+		}
+			
 		var items=obj.message.match(route.parser) || [];
 
 		_.each(route.keys,function(item){
@@ -67,11 +82,26 @@ plugin.prototype.routeMessage=function(route,obj)
 			counter++;
 		});
 		route.callback(keys,obj,function(message,channel){
-			self.parent.say(channel || obj.channel,message);
+			try{
+				if(obj.isChannel)
+				{
+					self.parent.say(channel || obj.channel,message);	
+				}
+				else
+				{
+					self.parent.say(channel || obj.name,message);
+				}
+			}catch(e)
+			{
+
+			}
+
+			
 		})
 	}catch(e)
 	{
 		sys.puts(e)
+		//console.log(e)
 	}
 }
 plugin.prototype.toRegex=function(message)
@@ -88,14 +118,14 @@ plugin.prototype.toRegex=function(message)
 		return reg;
 	}catch(e)
 	{
-		sys.puts(e)
+		//sys.puts(e)
 	}
 
 }
-plugin.prototype.checkRoute=function(message,route)
+plugin.prototype.checkRoute=function(obj,route)
 {
 	try{
-		if(route.parser.test(message) || route.parser.test(this.prefixExists(message)))
+		if((route.parser.test(obj.message) || route.parser.test(this.prefixExists(obj.message))) && (route && route.allowedTypes &&(route.allowedTypes.length==0 || route.allowedTypes.indexOf(obj.type)!=-1)))
 		{
 			return true;
 		}
@@ -109,31 +139,63 @@ plugin.prototype.checkRoute=function(message,route)
 	}
 
 }
-plugin.prototype.in=function(route,callback)
+plugin.prototype.in=function(route,callback,allowedTypes,requiredLevel)
 {	
-
-
-	if(typeof route=="string")
-	{
-		var obj={};
-
-
-		obj.callback=callback;
-		obj.keys=this.getKeys(route);
-		obj.parser=this.toRegex(route);
-		this.routes[route]=obj;
-	}
-	else if(typeof route=="object")
-	{
-		var self=this;
-		_.each(route,function(r){
+	try{
+		if(typeof route=="string")
+		{
 			var obj={};
+
+
 			obj.callback=callback;
-			obj.keys=self.getKeys(r);
-			obj.parser=self.toRegex(r);
-			self.routes[r]=obj;
-		})
-		
+			obj.keys=this.getKeys(route);
+			obj.parser=this.toRegex(route);
+			obj.allowedTypes=allowedTypes || [];
+			obj.level=this.getLevels(requiredLevel);
+			obj.name=route;
+			this.routes.push(obj);
+		}
+		else if(typeof route=="object")
+		{
+			var self=this;
+			_.each(route,function(r){
+				var obj={};
+				obj.callback=callback;
+				obj.keys=self.getKeys(r);
+				obj.parser=self.toRegex(r);
+				obj.allowedTypes=allowedTypes || [];
+				obj.level=self.getLevels(requiredLevel);
+				obj.name=route;
+				self.routes.push(obj);
+			})
+
+		}
+	}catch(e)
+	{
+		sys.puts(e)
 	}
 
+}
+plugin.prototype.getLevels=function(allowed)
+{
+	if(!allowed || allowed.length==0)
+		return [];
+	
+		if(allowed.indexOf("*")==-1)
+		{
+			allowed.push("*");
+			if(allowed.indexOf("@")==-1)
+			{
+				allowed.push("@");
+				if(allowed.indexOf("+")==-1)
+				{
+					allowed.push("+");
+					if(allowed.indexOf(" ")==-1)
+					{
+						allowed.push(" ");
+					}
+				}
+			}
+		}
+	return allowed;
 }
