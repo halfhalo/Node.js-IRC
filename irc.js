@@ -472,7 +472,7 @@ server.prototype.registerPlugins=function()
 						}
 					}catch(e)
 					{
-						console.log(e)
+						sys.puts(file+" "+e)
 					}
 				});
 			}

@@ -17,7 +17,9 @@ plugin.prototype.onMessage=function(obj)
 
 		if(self.checkRoute(obj,route))
 		{
+
 			self.plugins['auth'].allowed(obj.name,obj.channel,obj.mode || " ",route.level,function(s){
+
 				if(s)
 					self.routeMessage(route,obj);
 			})
@@ -135,7 +137,7 @@ plugin.prototype.checkRoute=function(obj,route)
 		}
 	}catch(e)
 	{
-		//sys.puts(e)
+		sys.puts(e)
 	}
 
 }
