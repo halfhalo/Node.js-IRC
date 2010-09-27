@@ -211,7 +211,7 @@ server.prototype.onPrivateMessage=function(match,params)
 	obj.type=match[2];
 	obj.channel=params[1];
 	obj.isChannel=this.isChannel(obj.channel);
-	obj.mode=this.getUserMode(obj.name,obj.channel);
+	obj.mode=this.getUserMode(obj.channel,obj.name);
 	if(/^\01/.test(params[2]))
 	{
 		obj.type="CTCP";
@@ -402,6 +402,7 @@ server.prototype.addUser=function(channel,name)
 		this.channels[channel]={};
 		
 	var mode=this.parseUserMode(name);
+
 	var user=this.parseUser(name);
 	if(!this.channels[channel][user])
 		this.channels[channel][user]=mode;
@@ -409,8 +410,10 @@ server.prototype.addUser=function(channel,name)
 }
 server.prototype.getUserMode=function(channel,name)
 {
-	if(this.channels[channel] && this.channesls[channel][name])
-		return this.channels[channel][name];
+	if(this.channels[channel] && this.channels[channel][name])
+	{
+		return this.channels[channel][name];	
+	}
 	return "";
 }
 server.prototype.userInChannel=function(channel,name)

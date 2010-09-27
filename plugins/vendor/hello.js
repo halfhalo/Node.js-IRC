@@ -18,5 +18,8 @@ plugin.prototype.registerPlugins=function(p,parent)
 		{
 			say("hello!")
 		}
-	});
+	},['PRIVMSG']);
+	this.plugins['core'].in(["blame","blame :channel"],function(items,obj,say){
+		say("blames oil",items.channel || obj.channel);
+	},['PRIVMSG'],["+"]);
 }
