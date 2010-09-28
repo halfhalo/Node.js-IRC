@@ -1,0 +1,14 @@
+{
+  "name": "nodejs-irc",
+  "description": "Node.js IRC Bot Framework",
+  "version": "0.1.0",
+  "author": "Patrick Roberts",
+  "contributors": [ 
+    { "name": "Patrick Roberts", "email": "patrick@silentbluesystems.com" }
+  ],
+  "dependencies": { "mongoose": "", "hash":"", "underscore":"","async":"","request":"","hash":"","joose":"","joosex-namespace-depended":"" },
+  "keywords": ["irc", "bot", "plugins"],
+  "directories": { "plugins": "./plugins" },
+
+  "engines": { "node": ">= 0.2.0" }
+}

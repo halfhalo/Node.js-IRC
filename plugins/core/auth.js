@@ -1,6 +1,9 @@
 var auth=exports;
 var async=require('async')
 require('underscore');
+require('joose')
+require('joosex-namespace-depended')
+require('hash')
 var mongoose=require('mongoose').Mongoose;
 var plugin=auth.plugin=function(name,folder)
 {
@@ -45,6 +48,7 @@ var plugin=auth.plugin=function(name,folder)
 		    methods: {
 		        save: function(fn){
 		            this.updated_at = new Date();
+					this.password=Hash.md5(this.password);
 		            this.__super__(fn);
 		        }
 		    },
@@ -72,7 +76,7 @@ plugin.prototype.registerPlugins=function(plugins,parent)
 }
 plugin.prototype.allowed=function(user,channel,mode,allowed,callback)
 {
-	if(allowed.length==0 || allowed.indexOf(mode)!=-1)
+	if(allowed.length==0 || allowed.indexOf(mode)!=-1 || (this.onlineUsers[user] && (allowed.indexOf(this.onlineUsers[user].global)!=-1 || allowed.indexOf(this.onlineUsers[user].channels[channel].mode)!=-1)))
 	{
 		callback(true);
 	}
@@ -109,12 +113,24 @@ plugin.prototype.setChannelMode=function(user,channel,mode)
 plugin.prototype.login=function(user,pass,callback)
 {
 	var self=this;
-	this.User.find({username:user,password:pass}).all(function(arr){
+	this.User.find({username:user,password:Hash.md5(pass)}).all(function(arr){
 		if(arr && arr.length==1)
 		{
 			var u=arr[0];
+			u.channels={};
+			u.permissions={};
 			//console.log(u)
-			
+			_.each(arr[0].channels,function(channel){
+				u.channels[channel.name]={}
+				u.channels[channel.name].name=channel.name
+				u.channels[channel.name].mode=channel.mode
+			})
+			_.each(arr[0].permissions,function(channel){
+				u.permissions[channel.name]={}
+				u.permissions[channel.name].name=channel.name
+				u.permissions[channel.name].method=channel.method
+				u.permissions[channel.name].mode=channel.mode
+			})
 			self.addOnlineUser(u);
 			callback(true,"User Logged In")
 		}
@@ -132,6 +148,7 @@ plugin.prototype.register=function(obj,callback)
 		u.username=obj.username;
 		u.password=obj.password;
 		u.realname=obj.name;
+		u.global="";
 		u.email=obj.email;
 
 		this.User.find({username: obj.username}).one(function(array){
