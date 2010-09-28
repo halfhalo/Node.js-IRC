@@ -13,7 +13,7 @@ var plugin=auth.plugin=function(name,folder)
 	this.folder=folder;
 	this.onlineUsers={};
 	try{
-		this.db=mongoose.connect('mongodb://silentbluesystems.com/node-irc');
+		this.db=mongoose.connect('mongodb:///node-irc');
 		
 		mongoose.model('User', {
 
