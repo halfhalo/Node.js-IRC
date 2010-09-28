@@ -1,6 +1,6 @@
 Model.define('User',{
 
-  collection : 'test_user', // (optional) if not present uses the model name instead.
+  collection : 'node-irc', // (optional) if not present uses the model name instead.
 
   // defines your data structure
   types: {
@@ -31,14 +31,14 @@ Model.define('User',{
   methods : {}, // adds methods to Model instances.
 
   setters: { // custom setters
-    first: function(v){
-      return v.toUpperCase();
-    }
+  //  first: function(v){
+  //    return v.toUpperCase();
+  //  }
   },
 
   getters: { // custom getters
-    username: function(v){
-      return v.toUpperCase();
-    }
+  //  username: function(v){
+  //    return v.toUpperCase();
+   // }
   }
 });
