@@ -23,11 +23,11 @@ plugin.prototype.registerPlugins=function(p,parent)
 		})
 	},['PRIVMSG']);
 	this.plugins['core'].in(["join :channel"],function(items,obj,say){
-			self.plugins['core'].enterChannel(channel);
-			console.log(channel)
+			self.plugins['core'].enterChannel(items.channel);
+			console.log(items.channel)
 	},['PRIVMSG']);
 	this.plugins['core'].in(["please leave :channel"],function(items,obj,say){
-			self.plugins['core'].leaveChannel(channel);
+			self.plugins['core'].leaveChannel(items.channel);
 	},['PRIVMSG'],["*"]);
 	}catch(e){console.log(e)};
 }
