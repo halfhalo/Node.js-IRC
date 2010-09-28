@@ -1,32 +1,14 @@
 var auth=exports;
 var async=require('async')
 require('underscore');
-var dbH=require('./db/db.js');
+var mongoose=require('mongoose');
 var plugin=auth.plugin=function(name,folder)
 {
 	this.plugins={};
 	this.parent={};
 	this.name=name;
 	this.folder=folder;
-	this.users=new dbH.plugin("auth.db");
-	this.users.new("users",{
-		'username':'string',
-		'password':'string',
-		'global':'string',
-		'channels':{
-			'name':'string',
-			'mode':'string'
-		}
-	},"username");
-	this.users.new("onlineUsers",{
-		'username':'string',
-		'password':'string',
-		'global':'string',
-		'channels':{
-			'name':'string',
-			'mode':'string'
-		}
-	},"username");
+
 	
 }
 plugin.prototype.registerPlugins=function(plugins,parent)
