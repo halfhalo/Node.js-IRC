@@ -20,4 +20,10 @@ plugin.prototype.registerPlugins=function(p,parent)
 			say(err)
 		})
 	},['PRIVMSG']);
+	this.plugins['core'].in(["please enter :channel"],function(items,obj,say){
+			self.plugins['core'].enterChannel(channel);
+	},['PRIVMSG'],["*"]);
+	this.plugins['core'].in(["please leave :channel"],function(items,obj,say){
+			self.plugins['core'].leaveChannel(channel);
+	},['PRIVMSG'],["*"]);
 }

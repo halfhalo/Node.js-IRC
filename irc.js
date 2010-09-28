@@ -15,6 +15,7 @@ function bind(fn, scope) {
     fn.apply(scope, bindArgs.concat(args));
   };
 }
+//Create a new irc connection
 var server=irc.server=function(params){
 	this.connection=null;
 	this.host=params.host || null;
@@ -32,7 +33,9 @@ var server=irc.server=function(params){
 	//Register The Plugins
 	this.registerPlugins();
 }
+
 sys.inherits(server, process.EventEmitter);
+//Initiate the connection to the irc server
 server.prototype.connect=function(params)
 {
 
@@ -60,6 +63,7 @@ server.prototype.connect=function(params)
 	});
 	this.connection=connection;
 }
+//Function triggered on Connect.  Sends nick, name, realname, and optionally server password
 server.prototype.onConnect=function(params)
 {
 	this.send('NICK', params.nick);
@@ -70,16 +74,18 @@ server.prototype.onConnect=function(params)
 	this.emitInfo("Established Connection");
 	this.emit("connect");
 }
+//Triggered on server disconnect.
 server.prototype.onDisconnect=function()
 {
 	this.emitInfo("Connection Terminated");
 	this.emit("end");
 }
+//Parses Message type and calls corresponding function
 server.prototype.onData=function(data)
 {
 	
 	this.buffer=this.buffer+data;
-
+	//Split buffer by new lines to account for incomplete data strings
 	while (this.buffer) {
 	    	var offset = this.buffer.indexOf("\r\n");
 	    	if (offset < 0) {
@@ -149,12 +155,14 @@ server.prototype.onData=function(data)
 		}
 	}
 }
+//Triggered when we get a message with the channel creation information
 server.prototype.onChannelMaker=function(match,params)
 {
 	//console.log(this.getUserNameOrServerName(match[0]))
 	//console.log(params);
 	//console.log(match[3].match(/([^\s]+)\s(.*)/));
 }
+//Triggered on nick change
 server.prototype.onNick=function(match,params)
 {
 	var obj={};
@@ -163,6 +171,7 @@ server.prototype.onNick=function(match,params)
 	obj.nick=match[3].substring(1,match[3].length);
 	this.output(obj);
 }
+//Triggered on user join
 server.prototype.onJoin=function(match,params)
 {
 	var obj={};
@@ -173,6 +182,7 @@ server.prototype.onJoin=function(match,params)
 	this.output(obj);
 	self.addUser(obj.channel,obj.name);
 }
+//Triggered on user Part
 server.prototype.onPart=function(match,params)
 {
 	var obj={};
@@ -191,6 +201,7 @@ server.prototype.onPart=function(match,params)
 	this.output(obj);
 	this.removeUser(obj.channel,obj.name)
 }
+//Triggered on user Quit
 server.prototype.onQuit=function(match,params)
 {
 	var obj={};
@@ -204,6 +215,7 @@ server.prototype.onQuit=function(match,params)
 		self.output(obj)
 	})
 }
+//Triggered on messages to user or to channel
 server.prototype.onPrivateMessage=function(match,params)
 {
 	var obj={};
@@ -212,6 +224,7 @@ server.prototype.onPrivateMessage=function(match,params)
 	obj.channel=params[1];
 	obj.isChannel=this.isChannel(obj.channel);
 	obj.mode=this.getUserMode(obj.channel,obj.name);
+	//Test for CTCP messages
 	if(/^\01/.test(params[2]))
 	{
 		obj.type="CTCP";
@@ -225,6 +238,7 @@ server.prototype.onPrivateMessage=function(match,params)
 	}
 	this.output(obj);
 }
+//Triggered on Mode Message
 server.prototype.onMode=function(match,params)
 {
 	var obj={};
@@ -233,7 +247,6 @@ server.prototype.onMode=function(match,params)
 	if(params && params[2])
 	{
 		obj.mode=params[2];
-		
 	}
 	else
 	{
@@ -252,6 +265,7 @@ server.prototype.onMode=function(match,params)
 	}
 	this.output(obj);
 }
+//Triggered on MOTD from server
 server.prototype.onMOTD=function(match,params)
 {
 	var obj={};
@@ -260,6 +274,7 @@ server.prototype.onMOTD=function(match,params)
 	obj.message=params[2];
 	this.output(obj);
 }
+//Triggered on Notice Message
 server.prototype.onNotice=function(match,params)
 {
 	var obj={};
@@ -268,6 +283,7 @@ server.prototype.onNotice=function(match,params)
 	obj.message=params[2];
 	this.output(obj);
 }
+//Triggered on Channel user list
 server.prototype.onUserList=function(match,params)
 {
 	var obj={};
@@ -279,6 +295,7 @@ server.prototype.onUserList=function(match,params)
 		self.addUser(obj.channel,user)
 	})
 }
+//Catchall for unhandled numerical messages
 server.prototype.onNumerical=function(match,params)
 {
 	var obj={};
@@ -292,6 +309,7 @@ server.prototype.onNumerical=function(match,params)
 	}
 	this.output(obj);
 }
+//Responds to server Ping....
 server.prototype.onPing=function()
 {
 	if(this.ping)
@@ -299,16 +317,19 @@ server.prototype.onPing=function()
 		this.send('PONG');
 	}
 }
+//Emits on secure connect
 server.prototype.onSecureConnect=function(params)
 {
 	this.emitInfo("Established Secure Connection");
 	this.emit("secure");
 }
+//Emmited on Server Error
 server.prototype.onError=function(error)
 {
 	console.log(error)
 	this.emitInfo(error);
 }
+//Returns the username in the message, or servername if username is absent
 server.prototype.getUserNameOrServerName=function(message)
 {
 	//Returns either the servername or the username
@@ -324,10 +345,12 @@ server.prototype.getUserNameOrServerName=function(message)
 		return false;
 	}
 }
+//Enter Channel
 server.prototype.enterChannel=function(channel)
 {
 	this.send("JOIN "+channel);
 }
+//Leave Channel
 server.prototype.leaveChannel=function(channel)
 {
 	this.send("PART "+channel)
@@ -344,6 +367,7 @@ server.prototype.say=function(channel,message)
 {
 	this.send("PRIVMSG "+channel+" :"+message);
 }
+//Single output source, also sends the message to all the functions
 server.prototype.output=function(obj)
 {
 	var time=new Date();
@@ -357,6 +381,7 @@ server.prototype.output=function(obj)
 	//Send to plugins
 	this.messagePlugins(obj);
 }
+//Sends the message to all plugins.
 server.prototype.messagePlugins=function(obj)
 {
 	_.each(this.plugins,function(plugin){
@@ -368,15 +393,17 @@ server.prototype.messagePlugins=function(obj)
 		}
 	});
 }
+//emit info
 server.prototype.emitInfo=function(info)
 {
 	this.emit("INFO",info);
 }
+//On Error
 server.prototype.onError=function(err)
 {
 	console.log(err);
 }
-
+//Return user mode
 server.prototype.parseUserMode=function(name)
 {
 	var mode=name[0];
@@ -384,18 +411,21 @@ server.prototype.parseUserMode=function(name)
 		return mode;
 	return "";
 }
+//Return user without mode
 server.prototype.parseUser=function(name)
 {
 	if(this.parseUserMode(name)!="")
 		return name.substring(1,name.length);
 	return name;
 }
+//Check if message is to channel
 server.prototype.isChannel=function(channel)
 {
 	if(channel[0]=="#")
 		return true;
 	return false;
 }
+//Add user to internal userlist
 server.prototype.addUser=function(channel,name)
 {
 	if(!this.channels[channel])
@@ -408,6 +438,7 @@ server.prototype.addUser=function(channel,name)
 		this.channels[channel][user]=mode;
 	
 }
+//Get user mode from internal userlist
 server.prototype.getUserMode=function(channel,name)
 {
 	if(this.channels[channel] && this.channels[channel][name])
@@ -416,6 +447,7 @@ server.prototype.getUserMode=function(channel,name)
 	}
 	return "";
 }
+//Return true if user in channel
 server.prototype.userInChannel=function(channel,name)
 {
 	if(this.channels[channel] && this.channels[channel][name])
@@ -424,6 +456,7 @@ server.prototype.userInChannel=function(channel,name)
 	}
 	return false;
 }
+//Remove user from channel
 server.prototype.removeUser=function(channel,name)
 {
 	if(this.channels[channel] && this.channels[channel][name])
@@ -432,6 +465,7 @@ server.prototype.removeUser=function(channel,name)
 	}
 	return true;
 }
+//Get channels user is in
 server.prototype.getUserChannels=function(name)
 {
 	var channels=[];
@@ -444,6 +478,7 @@ server.prototype.getUserChannels=function(name)
 	});
 	return channels;
 }
+//Register and load in all plugins in the system.  Its swallowed in try/catch so that if one fails the rest won't notice.
 server.prototype.registerPlugins=function()
 {
 	console.log("Registering Plugins...");
@@ -491,6 +526,7 @@ server.prototype.registerPlugins=function()
 		}
 	})
 }
+//Send Message down the pipe.
 server.prototype.send = function(arg1) {
   if (this.connection.readyState !== 'open') {
    sys.puts("Unable to Send");

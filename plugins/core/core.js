@@ -9,15 +9,21 @@ var plugin=core.plugin=function(name,folder)
 	this.prefix="!";
 	this.name=name;
 	this.folder=folder;
+	this.rawOutput=[];
 }
 plugin.prototype.onMessage=function(obj)
 {
 	var self=this;
+	//Send the raw output to each plugin that wants it.
+	_.each(self.rawOutput,function(cb){
+	cb(obj);
+	});
+	//run through each route and see if it matches.
 	_.each(self.routes,function(route){
 
 		if(self.checkRoute(obj,route))
 		{
-
+		//check if the user is allowed to use that route.
 			self.plugins['auth'].allowed(obj.name,obj.channel,obj.mode || " ",route.level,function(s){
 
 				if(s)
@@ -28,6 +34,7 @@ plugin.prototype.onMessage=function(obj)
 		}
 	});
 }
+//Check if the prefix that is set is found in the message or if the bots name is found as well
 plugin.prototype.prefixExists=function(message)
 {
 	try{
@@ -51,6 +58,7 @@ plugin.prototype.registerPlugins=function(plugins,parent)
 	this.plugins=plugins || {};
 	this.parent=parent || {};
 }
+//Parse the regex to find the keys that match up with the variables
 plugin.prototype.getKeys=function(message)
 {
 	try{
@@ -65,6 +73,7 @@ plugin.prototype.getKeys=function(message)
 		//sys.puts(e)
 	}
 }
+//Route the message to the correct plugin
 plugin.prototype.routeMessage=function(route,obj)
 {
 	var counter=1;
@@ -106,6 +115,7 @@ plugin.prototype.routeMessage=function(route,obj)
 		//console.log(e)
 	}
 }
+//Create reges from the route
 plugin.prototype.toRegex=function(message)
 {
 	try{
@@ -124,6 +134,7 @@ plugin.prototype.toRegex=function(message)
 	}
 
 }
+//Check the route to see if it matches
 plugin.prototype.checkRoute=function(obj,route)
 {
 	try{
@@ -141,6 +152,7 @@ plugin.prototype.checkRoute=function(obj,route)
 	}
 
 }
+//Take in the route and set everything up.
 plugin.prototype.in=function(route,callback,allowedTypes,requiredLevel)
 {	
 	try{
@@ -178,6 +190,7 @@ plugin.prototype.in=function(route,callback,allowedTypes,requiredLevel)
 	}
 
 }
+//Get the levels that are allowed for the route
 plugin.prototype.getLevels=function(allowed)
 {
 	if(!allowed || allowed.length==0)
@@ -200,4 +213,20 @@ plugin.prototype.getLevels=function(allowed)
 			}
 		}
 	return allowed;
+}
+plugin.prototype.enterChannel=function(channel)
+{
+	this.parent.enterChannel(channel);
+}
+plugin.prototype.leaveChannel=function(channel)
+{
+	this.parent.leaveChannel(channel);
+}
+plugin.prototype.sendMessage=function(message,channel)
+{
+
+}
+plugin.prototype.listenRaw=function(callback)
+{
+	this.rawOutput.push(callback)
 }
