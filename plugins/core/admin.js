@@ -10,6 +10,8 @@ plugin.prototype.registerPlugins=function(p,parent)
 {
 	this.plugins=p || {};
 	var self=this;
+	try{
+	
 	this.plugins['core'].in(["register :username :password :name :email"],function(items,obj,say){
 		self.plugins['auth'].register(items,function(res,err){
 			say(err)
@@ -20,10 +22,12 @@ plugin.prototype.registerPlugins=function(p,parent)
 			say(err)
 		})
 	},['PRIVMSG']);
-	this.plugins['core'].in(["please enter :channel"],function(items,obj,say){
+	this.plugins['core'].in(["join :channel"],function(items,obj,say){
 			self.plugins['core'].enterChannel(channel);
-	},['PRIVMSG'],["*"]);
+			console.log(channel)
+	},['PRIVMSG']);
 	this.plugins['core'].in(["please leave :channel"],function(items,obj,say){
 			self.plugins['core'].leaveChannel(channel);
 	},['PRIVMSG'],["*"]);
+	}catch(e){console.log(e)};
 }
