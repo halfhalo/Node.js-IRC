@@ -379,19 +379,12 @@ server.prototype.output=function(obj)
 	this.emit(obj.type,JSON.stringify(obj));
 	this.emit('DEBUG',JSON.stringify(obj));
 	//Send to plugins
-	this.messagePlugins(obj);
+	this.plugins.onMessage(obj);
 }
 //Sends the message to all plugins.
 server.prototype.messagePlugins=function(obj)
 {
-	_.each(this.plugins,function(plugin){
-		try{
-			plugin.onMessage(obj);
-		}catch(e)
-		{
-			//console.log(e)
-		}
-	});
+	
 }
 //emit info
 server.prototype.emitInfo=function(info)
@@ -478,53 +471,20 @@ server.prototype.getUserChannels=function(name)
 	});
 	return channels;
 }
-//Register and load in all plugins in the system.  Its swallowed in try/catch so that if one fails the rest won't notice.
+
 server.prototype.registerPlugins=function()
 {
-	console.log("Registering Plugins...");
-	var folders=fs.readdirSync("plugins");
+	//Load in core plugin module, which will load in the rest
+	var coreplugins={};
+	//var folders=fs.readdirSync("plugins");
 	try{
-		_.each(folders,function(folder){
-			var tmpstat=fs.statSync('plugins/'+folder);
-			if(tmpstat.isDirectory())
-			{
-				var files=fs.readdirSync("plugins/"+folder);
-				_.each(files,function(file){
-					try{
-						var filetmpst=fs.statSync("plugins/"+folder+"/"+file);
-						if(filetmpst.isFile())
-						{
-							var tmp=require("./plugins/"+folder+"/"+file.substr(0,file.length-3));
-							if(self.plugins[file.substr(0,file.length-3)])
-							{
-								console.log("WARNING: Plugin already exists! "+file.substr(0,file.length-3))
-							}
-							else
-							{
-								self.plugins[file.substr(0,file.length-3)]=new tmp.plugin(file.substr(0,file.length-3),folder);
-								console.log("Plugin Registered: "+file.substr(0,file.length-3)+" ("+folder+")");
-							}
-						}
-					}catch(e)
-					{
-						sys.puts(file+" "+e)
-					}
-				});
-			}
-		});
-	}catch(e)
-	{
-		console.log(e)
+		var plugins=require('./plugins/pluginManager');
+		this.plugins=new plugins.manager(this);
 	}
-	//Activate all the plugins
-	_.each(self.plugins,function(plugin,name){
-		try{
-			self.plugins[name].registerPlugins(self.plugins,self);
-		}catch(e)
-		{
-			
-		}
-	})
+	catch(e)
+	{
+		sys.puts(e)
+	}
 }
 //Send Message down the pipe.
 server.prototype.send = function(arg1) {
