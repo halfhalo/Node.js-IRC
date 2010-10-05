@@ -370,12 +370,7 @@ server.prototype.say=function(channel,message)
 //Single output source, also sends the message to all the functions
 server.prototype.output=function(obj)
 {
-	var time=new Date();
-	obj.year=time.getFullYear();
-	obj.month=time.getMonth()+1;
-	obj.hour=time.getHours();
-	obj.day=time.getDate();
-	obj.seconds=time.getSeconds();
+
 	this.emit(obj.type,JSON.stringify(obj));
 	this.emit('DEBUG',JSON.stringify(obj));
 	//Send to plugins
