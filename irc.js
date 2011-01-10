@@ -55,8 +55,7 @@ server.prototype.connect=function(params)
 		self.onData(data);
 	});
 	connection.addListener('error',function(error){
-		console.log(error)
-		//self.onError(error);
+		self.onError(error);
 	});
 	connection.addListener('end',function(){
 		self.onDisconnect(params);
@@ -83,7 +82,9 @@ server.prototype.onDisconnect=function()
 //Parses Message type and calls corresponding function
 server.prototype.onData=function(data)
 {
-	
+
+	this.emit("data", data);	
+
 	this.buffer=this.buffer+data;
 	//Split buffer by new lines to account for incomplete data strings
 	while (this.buffer) {
@@ -127,7 +128,7 @@ server.prototype.onData=function(data)
 					this.onNick(match,params);
 				break;
 				case 'PING':
-					this.onPing();
+					this.onPing(match,params);
 				break;
 				case '333':
 					this.onChannelMaker(match,params);
@@ -149,12 +150,19 @@ server.prototype.onData=function(data)
 				case '376':
 				this.onNumerical(match,params);
 				break;
+				case '433':
+				this.onNicknameInUse(match,params);
+				break;
 				case 'PONG':
 				break;
 			}
 		}
 	}
 }
+server.prototype.onNicknameInUse = function(match, params) {
+	this.emit("nicknameInUse", match, params);
+};
+
 //Triggered when we get a message with the channel creation information
 server.prototype.onChannelMaker=function(match,params)
 {
@@ -236,6 +244,7 @@ server.prototype.onPrivateMessage=function(match,params)
 	{
 		obj.message=params[2];	
 	}
+	this.emit("message", obj);
 	this.output(obj);
 }
 //Triggered on Mode Message
@@ -310,11 +319,11 @@ server.prototype.onNumerical=function(match,params)
 	this.output(obj);
 }
 //Responds to server Ping....
-server.prototype.onPing=function()
+server.prototype.onPing=function(match, params)
 {
 	if(this.ping)
 	{
-		this.send('PONG');
+		this.send('PONG ' + params[3]);
 	}
 }
 //Emits on secure connect
@@ -328,6 +337,7 @@ server.prototype.onError=function(error)
 {
 	console.log(error)
 	this.emitInfo(error);
+	this.emit("error", error);
 }
 //Returns the username in the message, or servername if username is absent
 server.prototype.getUserNameOrServerName=function(message)
@@ -357,11 +367,11 @@ server.prototype.leaveChannel=function(channel)
 }
 server.prototype.quit=function(reason)
 {
-	
+	this.send("QUIT "+reason);
 }
-server.prototype.nick=function(nick)
+server.prototype.changeNick=function(nick)
 {
-	
+	this.send("NICK " + nick);
 }
 server.prototype.say=function(channel,message)
 {
@@ -473,7 +483,7 @@ server.prototype.registerPlugins=function()
 	var coreplugins={};
 	//var folders=fs.readdirSync("plugins");
 	try{
-		var plugins=require('./plugins/pluginManager');
+		var plugins=require('../plugins/pluginManager');
 		this.plugins=new plugins.manager(this);
 	}
 	catch(e)
