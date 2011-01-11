@@ -70,8 +70,6 @@ server.prototype.onConnect=function(params)
 	if(params.pass)
 		this.send('PASS',params.pass)
   	this.send('USER', params.user, '0', '*', ':'+params.real);
-	this.emitInfo("Established Connection");
-	this.emit("connect");
 }
 //Triggered on server disconnect.
 server.prototype.onDisconnect=function()
@@ -134,6 +132,8 @@ server.prototype.onData=function(data)
 					this.onChannelMaker(match,params);
 				break;
 				case '001':
+					this.emit("connect");
+					break;
 				case '002':
 				case '003':
 				case '250':
@@ -150,6 +150,9 @@ server.prototype.onData=function(data)
 				case '376':
 				this.onNumerical(match,params);
 				break;
+				case '405':
+				this.onTooManyChannels(match,params);
+				break;
 				case '433':
 				this.onNicknameInUse(match,params);
 				break;
@@ -159,6 +162,9 @@ server.prototype.onData=function(data)
 		}
 	}
 }
+server.prototype.onTooManyChannels = function(match, params) {
+	this.emit("tooManyChannels", match, params);
+};
 server.prototype.onNicknameInUse = function(match, params) {
 	this.emit("nicknameInUse", match, params);
 };
@@ -361,9 +367,13 @@ server.prototype.enterChannel=function(channel)
 	this.send("JOIN "+channel);
 }
 //Leave Channel
-server.prototype.leaveChannel=function(channel)
+server.prototype.leaveChannel=function(channel, message)
 {
-	this.send("PART "+channel)
+	if (message !== undefined && message.length > 0) {
+		this.send("PART " + channel + " " + message)
+	} else {
+		this.send("PART " + channel);
+	}
 }
 server.prototype.quit=function(reason)
 {
