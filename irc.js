@@ -62,6 +62,11 @@ server.prototype.connect=function(params)
 	});
 	this.connection=connection;
 }
+
+server.prototype.disconnect=function() {
+  this.connection.end();
+  this.connection.destroy();
+}
 //Function triggered on Connect.  Sends nick, name, realname, and optionally server password
 server.prototype.onConnect=function(params)
 {
@@ -70,6 +75,9 @@ server.prototype.onConnect=function(params)
 	if(params.pass)
 		this.send('PASS',params.pass)
   	this.send('USER', params.user, '0', '*', ':'+params.real);
+
+    this.emitInfo("Established Connection");
+    this.emit("connect");
 }
 //Triggered on server disconnect.
 server.prototype.onDisconnect=function()
@@ -132,8 +140,6 @@ server.prototype.onData=function(data)
 					this.onChannelMaker(match,params);
 				break;
 				case '001':
-					this.emit("connect");
-					break;
 				case '002':
 				case '003':
 				case '250':
@@ -327,10 +333,10 @@ server.prototype.onNumerical=function(match,params)
 //Responds to server Ping....
 server.prototype.onPing=function(match, params)
 {
-	if(this.ping)
-	{
-		this.send('PONG ' + params[3]);
-	}
+  this.emit("ping", match, params);
+  if(this.ping) {
+    this.send('PONG ' + params[3]);
+  }
 }
 //Emits on secure connect
 server.prototype.onSecureConnect=function(params)
