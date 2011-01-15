@@ -499,7 +499,7 @@ server.prototype.registerPlugins=function()
 	var coreplugins={};
 	//var folders=fs.readdirSync("plugins");
 	try{
-		var plugins=require('../plugins/pluginManager');
+		var plugins=require('./plugins/pluginManager');
 		this.plugins=new plugins.manager(this);
 	}
 	catch(e)
