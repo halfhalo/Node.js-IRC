@@ -1,7 +1,7 @@
 var sys=require('sys');
 var net=require('net');
 var crypto = require('crypto');
-require('underscore');
+var _ = require('underscore');
 var dns = require('dns');
 var fs=require('fs');
 var irc = exports;

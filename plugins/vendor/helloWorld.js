@@ -1,6 +1,6 @@
 var hello=exports;
 var sys=require('sys');
-require('underscore');
+var _=require('underscore');
 var plugin=hello.plugin=function(manager,route)
 {
 	this.manager=manager;
