@@ -42,19 +42,19 @@ server.prototype.connect=function(params)
 
 	var connection = null;
 	if (this.ssl) {
-        connection = tls.connect(this.port,this.host,this.ssl);
-        connection.socket.on('connect', function(){
-            self.onConnect(params);
-        });
-        connection.socket.on('data', function(data){
-            self.onData(data);
-        });
-        connection.socket.on('error',function(error){
-            self.onError(error);
-        });
-        connection.socket.on('end',function(){
-            self.onDisconnect(params);
-        });
+		connection = tls.connect(this.port,this.host,this.ssl);
+		connection.socket.on('connect', function(){
+			self.onConnect(params);
+		});
+		connection.socket.on('data', function(data){
+			self.onData(data);
+		});
+		connection.socket.on('error',function(error){
+			self.onError(error);
+		});
+		connection.socket.on('end',function(){
+			self.onDisconnect(params);
+		});
 	} else {
 		connection = net.createConnection(this.port,this.host);
 		connection.setKeepAlive(enable=true,10000);
