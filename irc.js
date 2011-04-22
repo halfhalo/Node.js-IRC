@@ -1,5 +1,6 @@
 var sys=require('sys');
 var net=require('net');
+var tls=require('tls');
 var crypto = require('crypto');
 var _ = require('underscore');
 var dns = require('dns');
@@ -39,27 +40,42 @@ sys.inherits(server, process.EventEmitter);
 server.prototype.connect=function(params)
 {
 
-	var connection=net.createConnection(this.port,this.host);
+	var connection = null;
+	if (this.ssl) {
+        connection = tls.connect(this.port,this.host,this.ssl);
+        connection.socket.on('connect', function(){
+            self.onConnect(params);
+        });
+        connection.socket.on('data', function(data){
+            self.onData(data);
+        });
+        connection.socket.on('error',function(error){
+            self.onError(error);
+        });
+        connection.socket.on('end',function(){
+            self.onDisconnect(params);
+        });
+	} else {
+		connection = net.createConnection(this.port,this.host);
+		connection.setKeepAlive(enable=true,10000);
+		connection.addListener('connect',function(){
+			self.onConnect(params);
+		});
+		connection.addListener('secure',function(){
+			self.onSecureConnect(params);
+		});
+		connection.addListener('data',function(data){
+			self.onData(data);
+		});
+		connection.addListener('error',function(error){
+			self.onError(error);
+		});
+		connection.addListener('end',function(){
+			self.onDisconnect(params);
+		});
+	}
 	connection.setEncoding(this.encoding);
 	connection.setTimeout(this.timeout);
-	connection.setKeepAlive(enable=true,10000);
-	if(this.ssl)
-		connection.setSecure(crypto.createCredentials(this.ssl));
-	connection.addListener('connect',function(){
-		self.onConnect(params);
-	});
-	connection.addListener('secure',function(){
-		self.onSecureConnect(params);
-	});
-	connection.addListener('data',function(data){
-		self.onData(data);
-	});
-	connection.addListener('error',function(error){
-		self.onError(error);
-	});
-	connection.addListener('end',function(){
-		self.onDisconnect(params);
-	});
 	this.connection=connection;
 }
 
