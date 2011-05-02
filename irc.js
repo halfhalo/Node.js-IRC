@@ -30,7 +30,6 @@ var server=irc.server=function(params){
 	this.channels={};
 	this.plugins={};
 	this.nick=params.nick;
-	self=this;
 	//Register The Plugins
 	this.registerPlugins();
 }
@@ -39,7 +38,7 @@ sys.inherits(server, process.EventEmitter);
 //Initiate the connection to the irc server
 server.prototype.connect=function(params)
 {
-
+	var self = this;
 	var connection = null;
 	if (this.ssl) {
 		connection = tls.connect(this.port,this.host,this.ssl);
@@ -216,7 +215,7 @@ server.prototype.onJoin=function(match,params)
 	
 	obj.channel=params[2];
 	this.output(obj);
-	self.addUser(obj.channel,obj.name);
+	this.addUser(obj.channel,obj.name);
 }
 //Triggered on user Part
 server.prototype.onPart=function(match,params)
@@ -240,6 +239,7 @@ server.prototype.onPart=function(match,params)
 //Triggered on user Quit
 server.prototype.onQuit=function(match,params)
 {
+	var self=this;
 	var obj={};
 	obj.name=this.getUserNameOrServerName(match[0]);
 	obj.type=match[2];
@@ -323,6 +323,7 @@ server.prototype.onNotice=function(match,params)
 //Triggered on Channel user list
 server.prototype.onUserList=function(match,params)
 {
+	var self=this;
 	var obj={};
 	obj.channel=params[1].split(/\s/)[2];
 	obj.type=match[2];
