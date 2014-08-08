@@ -1,7 +1,8 @@
 var sys=require('sys');
 var net=require('net');
+var tls=require('tls');
 var crypto = require('crypto');
-require('underscore');
+var _ = require('underscore');
 var dns = require('dns');
 var fs=require('fs');
 var irc = exports;
@@ -29,7 +30,6 @@ var server=irc.server=function(params){
 	this.channels={};
 	this.plugins={};
 	this.nick=params.nick;
-	self=this;
 	//Register The Plugins
 	this.registerPlugins();
 }
@@ -38,28 +38,43 @@ sys.inherits(server, process.EventEmitter);
 //Initiate the connection to the irc server
 server.prototype.connect=function(params)
 {
-
-	var connection=net.createConnection(this.port,this.host);
+	var self = this;
+	var connection = null;
+	if (this.ssl) {
+		connection = tls.connect(this.port,this.host,this.ssl);
+		connection.socket.on('connect', function(){
+			self.onConnect(params);
+		});
+		connection.socket.on('data', function(data){
+			self.onData(data);
+		});
+		connection.socket.on('error',function(error){
+			self.onError(error);
+		});
+		connection.socket.on('end',function(){
+			self.onDisconnect(params);
+		});
+	} else {
+		connection = net.createConnection(this.port,this.host);
+		connection.setKeepAlive(enable=true,10000);
+		connection.addListener('connect',function(){
+			self.onConnect(params);
+		});
+		connection.addListener('secure',function(){
+			self.onSecureConnect(params);
+		});
+		connection.addListener('data',function(data){
+			self.onData(data);
+		});
+		connection.addListener('error',function(error){
+			self.onError(error);
+		});
+		connection.addListener('end',function(){
+			self.onDisconnect(params);
+		});
+	}
 	connection.setEncoding(this.encoding);
 	connection.setTimeout(this.timeout);
-	connection.setKeepAlive(enable=true,10000);
-	if(this.ssl)
-		connection.setSecure(crypto.createCredentials(this.ssl));
-	connection.addListener('connect',function(){
-		self.onConnect(params);
-	});
-	connection.addListener('secure',function(){
-		self.onSecureConnect(params);
-	});
-	connection.addListener('data',function(data){
-		self.onData(data);
-	});
-	connection.addListener('error',function(error){
-		self.onError(error);
-	});
-	connection.addListener('end',function(){
-		self.onDisconnect(params);
-	});
 	this.connection=connection;
 }
 
@@ -200,7 +215,7 @@ server.prototype.onJoin=function(match,params)
 	
 	obj.channel=params[2];
 	this.output(obj);
-	self.addUser(obj.channel,obj.name);
+	this.addUser(obj.channel,obj.name);
 }
 //Triggered on user Part
 server.prototype.onPart=function(match,params)
@@ -224,6 +239,7 @@ server.prototype.onPart=function(match,params)
 //Triggered on user Quit
 server.prototype.onQuit=function(match,params)
 {
+	var self=this;
 	var obj={};
 	obj.name=this.getUserNameOrServerName(match[0]);
 	obj.type=match[2];
@@ -307,6 +323,7 @@ server.prototype.onNotice=function(match,params)
 //Triggered on Channel user list
 server.prototype.onUserList=function(match,params)
 {
+	var self=this;
 	var obj={};
 	obj.channel=params[1].split(/\s/)[2];
 	obj.type=match[2];

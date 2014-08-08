@@ -1,7 +1,7 @@
 var plugin=exports;
 var sys=require('sys');
 var fs= require('fs');
-require('underscore');
+var _=  require('underscore');
 var manager=plugin.manager=function(parent,prefix)
 {
 	this.core={};

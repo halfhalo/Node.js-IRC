@@ -1,6 +1,6 @@
 var core=exports;
 var sys=require('sys');
-require('underscore');
+var _=require('underscore');
 var plugin=core.plugin=function(name,folder)
 {
 	this.plugins={};
